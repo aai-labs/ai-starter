@@ -1,3 +1,7 @@
+# Local scratch clones (e.g. boilerplate read for AGENTS sync)
+.scratch/
+
+.specstory/
 # These are some examples of commonly ignored file patterns.
 # You should customize this list as applicable to your project.
 # Learn more about .gitignore:
@@ -6,6 +10,7 @@
 # Node artifact files
 node_modules/
 dist/
+.scratch/
 
 # Compiled Java class files
 *.class
