@@ -1,8 +1,29 @@
 # Testing guidelines
 
-For **Python**, prefer **[GivenPy](https://github.com/tadas-subonis/givenpy)** and **PyHamcrest**. GivenPy is a small BDD-shaped layer over any runner (pytest, unittest); PyHamcrest keeps assertions readable and composable.
+All testing conventions live here. `CODE_GUIDELINES.md` and `WEBAPP_GUIDELINES.md` link here instead of duplicating.
 
-## Dependencies
+## Core principles (all stacks)
+
+- Treat tests as **first-class**: refactor them like production code; package **by feature** next to or mirroring feature layout.
+- Name tests for **behavior** so failures read as documentation (story-style or `should_...`).
+- Prefer **integration** over heavy mocking unless volume forces substitutes (real DB / HTTP app where practical).
+- Prefer **linear** tests: setup → single act → assertions (optional cleanup); minimal branching in the act; avoid asserting incidental intermediate state.
+- For **new behavior**, prefer a test that describes the public outcome; for **bugs**, add a test at the **deepest layer** that still reproduces the bug.
+- **Unit tests** target a **unit of behavior**, not every class in isolation. **E2E** stays few and CI-aware.
+
+**DO** — Behavior-named tests; assertions next to the action they validate; explicit setup when it aids readability.
+
+**DON'T** — DSL-heavy layers that hide intent; mocking persistence in integration tests unless the test is about isolation.
+
+When reviewing coverage gaps, use **Code review priorities** in `CODE_GUIDELINES.md`.
+
+---
+
+## Python — GivenPy + PyHamcrest
+
+Prefer **[GivenPy](https://github.com/tadas-subonis/givenpy)** and **PyHamcrest**. GivenPy is a small BDD-shaped layer over pytest or unittest; PyHamcrest keeps assertions composable.
+
+### Dependencies
 
 ```text
 pip install givenpy PyHamcrest
@@ -10,58 +31,69 @@ pip install givenpy PyHamcrest
 
 (or declare the same in your project dependency file)
 
-## Shape of a test
+### Shape of a test
 
 Every test should use **given → when → then**:
 
-- **`given([...]) as context`**: list every precondition explicitly. Keep steps small; compose larger scenarios from named steps (and “master” steps that call others).
-- **`when`**: exactly **one** block per test. If you need more than one, split into more tests. Put only the code that is **under test**—usually the act from an end-user or API client perspective.
-- **`then`**: outcomes and postconditions. Prefer PyHamcrest’s `assert_that` over raw `assert` for clarity.
+- **`given([...]) as context`**: list preconditions explicitly; compose from named steps.
+- **`when`**: exactly **one** block per test — only the code **under test** (end-user or API client entrypoint). Split if you need more than one act.
+- **`then`**: outcomes; prefer PyHamcrest **`assert_that(actual, matcher)`**.
 
-## Setup steps
+### Setup steps
 
-- Prefer **higher-order functions** that return a step closure so steps stay **configurable** (e.g. `there_is_external_number(5)` returning `def step(context): ...`).
-- Use **`lambda_with(open, close)`** (from GivenPy) when a step must **clean up** after the context exits (connections, temp dirs, etc.).
-- Reuse steps across files (e.g. `tests/integration/steps_*.py`) so `given` blocks read like a scenario outline.
+- Prefer **higher-order functions** that return step closures (e.g. `there_is_external_number(5)` → `def step(context): ...`).
+- Use **`lambda_with(open, close)`** (GivenPy) for setup/teardown pairs (connections, temp dirs).
+- Reuse steps across files (e.g. `tests/integration/steps_*.py`).
 
-## Naming
+### Naming
 
-- Test names describe **behavior** and expectations at a glance, e.g. `test_user_should_be_able_to_login` or `test_user_should_not_be_able_to_login_with_invalid_credentials`.
-- Avoid vague names like `test_login` or `test_invalid_credentials`.
+- Good: `test_user_should_be_able_to_login`, `test_user_should_not_be_able_to_login_with_invalid_credentials`.
+- Avoid: `test_login`, `test_invalid_credentials`.
 
-## Assertions (PyHamcrest)
+### Assertions (PyHamcrest)
 
 - Use **`assert_that(actual, matcher)`** consistently.
-- Introduce **custom matchers** when they carry domain meaning.
-- If a matcher tree gets nested or hard to read, extract a **named function** that returns the matcher (named after the behavior, not the implementation).
+- **Custom matchers** for domain meaning; extract a **named function** returning a matcher when trees get nested.
 
-## Fit with the rest of `CODE_GUIDELINES.md`
+**DO** — `given`/`when`/`then`; Hamcrest matchers; reusable steps.
 
-- Tests remain **first-class**: refactor steps and matchers like production code; package tests **by feature** next to or mirroring the feature layout.
-- Favor **integration tests** hitting a real DB or HTTP app where practical; use GivenPy’s `given` to spin up app, DB, auth, and clients the same way the README’s larger examples do.
-- **Linear** tests: no unnecessary branching in `when`/`then`; keep `when` thin so failures localize to behavior.
+**DON'T** — Multiple `when` blocks per test; business logic inside matchers.
 
-## API / HTTP tests (Python or other backends)
+**Assertion order** — Preconditions in `given`; outcomes in `then` in the order they become observable.
 
-For new or changed behavior, cover at least:
+---
 
-- Happy path
-- Auth / permission failures
-- Important validation failures
-- Not-found and conflict responses where relevant
+## TypeScript / Node — HTTP integration (Jest + Supertest or equivalent)
 
-Schema changes MUST include migration files (when the stack uses migrations) and a test or CI step that applies them.
+Default to **direct integration style**, not BDD/DSL scaffolding. A test reads like a short API scenario:
 
-### TypeScript / Node HTTP suites (Jest + Supertest or equivalent)
+1. Create required data  
+2. Call the endpoint  
+3. Assert HTTP response  
+4. Optionally verify persistence via a repository  
 
-Default to a **direct integration-test style**, not BDD/DSL scaffolding. A test should read like a short executable API scenario:
+**Core rules**
 
-1. create the required data;
-2. call the endpoint;
-3. assert the HTTP response;
-4. optionally verify persistence or side effects via a repository.
+- Plain `describe` / `it`, plain `await`, local variables.
+- Put `expect(...)` **close to the action** it validates.
+- Setup **explicit in the test body**; duplication is OK when it keeps tests independent.
+- **Real repositories** for persistence checks; do not mock them unless the test is about isolation.
+- Helpers remove **transport boilerplate only**; if you must read the helper to understand intent, it is **too heavy**.
 
-The test SHOULD be understandable without reading custom DSLs, composed fixtures, or multiple helper layers.
+**Assertion ordering**
+
+1. Status code  
+2. Key response body fields  
+3. Persistence / repository state  
+4. Downstream side effects  
+
+**Scope** — One meaningful scenario per test. Long **flow** tests are OK when behavior is inherently sequential; keep chronological and assert only what belongs to that flow.
+
+**Response shape** — Assert the **live** API shape, not a legacy `{ success, data, error }` envelope the route no longer uses.
+
+**Migration rule** — Prefer new tests in this style; rewrite touched DSL-heavy tests when practical. **Do not** introduce new heavy Given/When/Then scaffolding for Node backend tests.
+
+Example (paths illustrative):
 
 ```ts
 import { setupTestServer } from "./testServer";
@@ -85,50 +117,160 @@ describe("Users API", () => {
 });
 ```
 
-**Core rules**
+### API / HTTP coverage (any backend)
 
-- Prefer plain `describe` / `it`, plain `await`, and local variables.
-- Put `expect(...)` **close to the action it validates**.
-- Keep setup **explicit inside the test body**; duplication is acceptable when it makes each test independent and readable.
-- Use **real repositories** for persistence checks; do not mock them in integration tests unless the test is specifically about isolation.
-- Helpers may remove **transport boilerplate only**; if reading the helper is required to understand the test intent, the helper is **too heavy**.
+For new or changed behavior, cover at least: happy path; auth / permission failures; important validation failures; not-found and conflict where relevant.
 
-**Assertion ordering**
+Schema changes **MUST** include migrations (when the stack uses them) and a test or CI step that applies them.
 
-1. status code;
-2. key response body fields;
-3. persistence / repository state;
-4. downstream side effects.
+**DO** — `describe`/`it` + `async`/`await`; assert HTTP then storage.
 
-**Scope of a single test**
+**DON'T** — Frameworks that hide assertions; shared fixtures that obscure the scenario.
 
-One meaningful scenario per test (`creates a user`, `starts a session with feedback`, `authenticates and returns token with user`). Long **flow tests** are OK when the behavior is inherently sequential (e.g. session start → activate → exercise → submit → complete); keep the flow chronological and assert only behavior that belongs to that flow.
-
-**Response shape**
-
-Assert against the **current live API shape**, not a legacy `{ success, data, error }` envelope that the route no longer uses.
-
-**Migration rule**
-
-When touching backend tests, prefer adding new tests in this direct style; rewrite touched DSL-heavy tests when practical instead of extending the older pattern. Do not introduce new heavy Given/When/Then scaffolding for new Node backend tests.
-
-### Choosing a style by stack
-
-- **TypeScript / Node** backend HTTP tests: the **direct integration style** above.
-- **Python** tests: **GivenPy + PyHamcrest** as in the earlier sections (the `given / when / then` block pattern is the project default there).
-
-Both stacks share the same goals: behavior-named tests, integration over heavy mocking, assertions near the action, no DSL wrappers that hide intent.
+---
 
 ## Browser E2E (e.g. Playwright)
 
-- Non-trivial UI regressions SHOULD get or update E2E coverage.
-- **Selectors and actions** live in **page objects** (or equivalent).
-- **Network or auth mocks** live in **shared test support** modules.
-- **Assertions** stay in **spec** files so failures read as product behavior.
+Write behavior-level coverage **before or alongside** features when possible; lock behavior after implementation.
 
-When reviewing whether tests are enough, use the priority list in `CODE_GUIDELINES.md` (**Code review priorities**).
+### Goals
+
+- **Page objects** encapsulate selectors and actions so steps stay stable when markup changes.
+- **Step definitions** (if using Cucumber) stay thin: translate Gherkin into page object calls only.
+
+### Suggested stack
+
+- **Playwright** (or equivalent) for automation.
+- **Page object** classes per main surface (page, modal, widget).
+
+### Example folder layout
+
+```text
+tests/
+  features/
+    steps/
+      checkout.steps.ts
+      account.steps.ts
+  pages/
+    CheckoutPage.ts
+    AccountSettingsPage.ts
+  support/
+    world.ts
+    hooks.ts
+```
+
+### Example: steps
+
+```typescript
+import { Given, When, Then } from "@cucumber/cucumber";
+import { CheckoutPage } from "../pages/CheckoutPage";
+
+Given("I open checkout", async function () {
+  this.checkout = new CheckoutPage(this.page);
+  await this.checkout.open();
+});
+
+When("I apply coupon {string}", async function (code: string) {
+  await this.checkout.applyCoupon(code);
+});
+
+Then("the order summary should show discount", async function () {
+  await this.checkout.expectDiscountVisible();
+});
+```
+
+### Example: page object
+
+```typescript
+import { Page, expect } from "@playwright/test";
+
+export class CheckoutPage {
+  constructor(private page: Page) {}
+
+  async open() {
+    await this.page.goto("/checkout");
+  }
+
+  async applyCoupon(code: string) {
+    await this.page.getByLabel("Coupon").fill(code);
+    await this.page.getByRole("button", { name: "Apply" }).click();
+  }
+
+  async expectDiscountVisible() {
+    await expect(this.page.getByTestId("discount-row")).toBeVisible();
+  }
+}
+```
+
+### Frontend testing pyramid (default order)
+
+1. **E2E** for real user journeys (Playwright or equivalent).  
+2. **UI-layer functional** when full E2E is too slow (Testing Library, RN Testing Library).  
+3. **Focused component tests** only for meaningful, hard-to-cover behavior.  
+4. **Reducer / store unit tests** only when logic warrants — avoid by default.  
+
+A good frontend test answers: *Can the user complete the flow? Does the right screen state appear? Do important controls behave? Does navigation complete?*
+
+### Page object DO / DON'T
+
+**Good page object** — One screen or clear UI area; user-level actions (`startNewSession()`, `submitFeedback()`); hides locators; `waitForLoaded()` / small user-level assertions; stays small.
+
+**Bad page object** — Raw component internals; business logic or huge mutable context; a getter per element; names like `setStoreStateAndContinue()` or `runScenarioA()`.
+
+Good names: `waitForLoaded()`, `enterFeedback(text)`, `selectArea(name)`, `clickStartExercises()`, `sessionComplete()`.
+
+### Mocking
+
+Mock **boundaries**, not the UI. OK: network/services, storage, AI calls, platform integrations. Avoid mocking components under test, navigation, or interactions you can drive for real.
+
+> Mock what crosses the app boundary, not what defines the user experience.
+
+### Assertions to prefer
+
+- Visibility; important **text**; **enabled/disabled**; **navigation** and completion; **visible errors**.  
+- Avoid: internal hooks, private state shape, exact timing, mock call counts (unless the test targets that boundary).
+
+### Test IDs
+
+Stable `data-testid` / `testID` on meaningful controls. **Good:** `start-session-button`, `feedback-screen`, `submit-feedback-button`. **Bad:** `button-1`, `container-left`, `blue-card`.
+
+### Selectors and naming
+
+- Prefer **`data-testid`** (or role/label) over brittle CSS chains.  
+- Align feature files with acceptance language from specs.  
+- Reuse page objects for shared widgets (nav, tables, modals).  
+- Test names describe user-visible behavior (e.g. `user can start a new session`), not `screen works`.
+
+### Anti-patterns
+
+- Reducer-only tests when a screen flow would cover the same logic.  
+- Snapshot-heavy dynamic UIs.  
+- Page objects that are trivial getters for every element.  
+- Large fixture systems that hide the flow.  
+- Ceremonial tests (`expect(true).toBeTruthy()`).  
+- Proving render only, not meaningful outcome.  
+
+Every test should prove a **user-visible** or **contract-level** outcome.
+
+**DO** — Page objects for selectors/actions; assertions in specs; stable testids.
+
+**DON'T** — E2E asserting global store implementation details; snapshots as default.
+
+**Assertion order** — Arrange UI state → act → assert visibility/text/navigation in order of user perception.
+
+---
+
+## Choosing a style by stack
+
+| Stack | Style |
+|-------|--------|
+| **Python** | GivenPy + PyHamcrest (`given` / `when` / `then`) |
+| **TypeScript / Node** HTTP | Direct integration (`describe` / `it`, local `expect`) |
+| **Browser** | Playwright + page objects (+ optional Cucumber steps) |
+
+Shared goals: behavior-named tests, integration over pointless mocks, assertions near the action, no hidden DSL.
 
 ## Reference
 
-- [GivenPy on GitHub](https://github.com/tadas-subonis/givenpy) — examples, `lambda_with`, and project guidelines.
-- [PyHamcrest](https://pyhamcrest.readthedocs.io/) — built-in matchers and custom matcher patterns.
+- [GivenPy](https://github.com/tadas-subonis/givenpy) — `lambda_with`, examples  
+- [PyHamcrest](https://pyhamcrest.readthedocs.io/)

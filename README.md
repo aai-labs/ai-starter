@@ -8,10 +8,10 @@ Drop these files into a new (or existing) project and any agent that respects `A
 
 The repository is intentionally small. The substance lives in a handful of guideline documents that the agent is instructed to consult on every task:
 
-- [`AGENTS.md`](AGENTS.md) — entry point for agents. Working habits, collaboration stance, and pointers to the guideline files below.
-- [`CODE_GUIDELINES.md`](CODE_GUIDELINES.md) — API design, architecture, HTTP conventions, backend layering, and review habits.
-- [`WEBAPP_GUIDELINES.md`](WEBAPP_GUIDELINES.md) — front-end patterns: routing, client/server state, E2E-oriented structure.
-- [`TESTING.md`](TESTING.md) — test conventions (Python GivenPy / API / browser).
+- [`AGENTS.md`](AGENTS.md) — entry point for agents: work loop (plan → verify → changelog), **what goes where**, guardrails (always / ask / never), collaboration stance, and pointers to the files below.
+- [`CODE_GUIDELINES.md`](CODE_GUIDELINES.md) — project-defining backend/API rules, HTTP, layering, design heuristics, review habits, definition of done.
+- [`WEBAPP_GUIDELINES.md`](WEBAPP_GUIDELINES.md) — front-end patterns: Next.js defaults, routing, client/server state, API boundary, imports — **no duplicated testing sections** (see `TESTING.md`).
+- [`TESTING.md`](TESTING.md) — **single home for tests**: Python (GivenPy + PyHamcrest), TypeScript/Node (direct HTTP integration), browser E2E (Playwright, page objects, pyramid).
 - [`CHANGELOG.md`](CHANGELOG.md) — feature-level change log the agent is expected to keep up to date.
 
 Guideline files use **MUST** / **SHOULD** / **MAY** to signal strictness — see `CODE_GUIDELINES.md` for the convention.
@@ -19,7 +19,7 @@ Guideline files use **MUST** / **SHOULD** / **MAY** to signal strictness — see
 ## How to use it
 
 1. Drop the guideline files (`AGENTS.md`, `CODE_GUIDELINES.md`, `WEBAPP_GUIDELINES.md`, `TESTING.md`, `CHANGELOG.md`) into your project root — see snippets below.
-2. Tailor each file to your stack — remove sections that don't apply, tighten rules that do.
+2. Tailor each file to your stack — remove sections that don't apply, tighten rules that do. Treat these files as a **starting baseline**, not a floor: delete anything your agent already gets right or that burns context without payoff.
 3. Start a session with an agent that reads `AGENTS.md` (Cursor, Claude Code, Codex, etc.). It will pick up the conventions automatically.
 
 ### Import into an existing project
