@@ -11,7 +11,7 @@ Run this from the root of the project you want to configure. Existing files are 
 ```bash
 tmp=$(mktemp -d)
 git clone --depth=1 git@bitbucket.org:tdisolutions/ai-coding-starter.git "$tmp"
-cp -n "$tmp"/{AGENTS,CODE_GUIDELINES,WEBAPP_GUIDELINES,TESTING,CHANGELOG}.md .
+cp -n "$tmp"/{AGENTS,INIT,CODE_GUIDELINES,WEBAPP_GUIDELINES,TESTING,CHANGELOG}.md .
 rm -rf "$tmp"
 ```
 
@@ -34,6 +34,7 @@ bash scripts/install.sh /path/to/your/project
 ## What you get
 
 - [`AGENTS.md`](AGENTS.md) — the agent entry point: work loop, guardrails, and where to find deeper guidance.
+- [`INIT.md`](INIT.md) — one-shot bootstrap prompt the agent follows once per repo to populate `AGENTS.md` with project-specific context (stack, commands, non-obvious patterns) and propose per-module sub-files for monorepos.
 - [`CODE_GUIDELINES.md`](CODE_GUIDELINES.md) — backend/API, architecture, review, and definition-of-done rules.
 - [`WEBAPP_GUIDELINES.md`](WEBAPP_GUIDELINES.md) — front-end structure, state, routing, imports, and API boundary rules.
 - [`TESTING.md`](TESTING.md) — the single home for Python, Node/TypeScript, and browser test conventions.
@@ -41,7 +42,9 @@ bash scripts/install.sh /path/to/your/project
 
 ## After importing
 
-Review the files before committing. Delete anything that does not fit your stack, tighten anything that matters, then start an agent session in the project. Treat these guidelines as a baseline, not as permanent boilerplate.
+1. **Review the files** before committing. Delete anything that does not fit your stack, tighten anything that matters. Treat these guidelines as a baseline, not as permanent boilerplate.
+2. **Bootstrap project context.** Open an agent session at the repo root and say *"Follow `INIT.md`."* The agent will discover your stack, commands, and non-obvious patterns from manifests and CI, then insert a populated `## Project context` block into `AGENTS.md`. For monorepos, it will propose per-module sub-`AGENTS.md` files only where modules actually diverge from the root. Review the resulting diff before committing.
+3. **Start working.** From this point on, agent sessions read `AGENTS.md` (and any per-module sub-files) automatically; you don't need to re-run `INIT.md` unless the stack or commands change substantially.
 
 ## Philosophy
 
