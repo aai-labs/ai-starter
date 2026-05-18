@@ -1,0 +1,157 @@
+# INIT.md
+
+> **For the user:** open a new agent session at the repo root and say *"Follow `INIT.md`."* Review the resulting diff before committing. This is a one-shot bootstrap, not a recurring task.
+
+---
+
+## Goal
+
+Add a populated `## Project context` block to `AGENTS.md` using the template in **Step 3** below, with every `<...>` replaced by a value discovered from the repository.
+
+## Why this is bounded
+
+Independent studies show that LLM-generated context files reduce task success by roughly 3% at +20% inference cost when committed without human review (Gloaguen et al., *Evaluating AGENTS.md*, arXiv:2602.11988; Augment 2026 study). The slots below are the narrow subset where agent-assisted discovery is positive ROI: **non-inferable commands, pinned versions, and counterintuitive patterns**. Stay inside that scope.
+
+## Pre-flight
+
+- If `AGENTS.md` already contains a `## Project context` section, **stop** and ask the user whether to refresh it in place or abort.
+- If `AGENTS.md` does not exist at the repo root, **stop** and ask the user where the agent guideline file lives.
+
+## Step 1 — Normalize AGENTS.md structure
+
+If `AGENTS.md` currently starts with `# Agent work loop`, restructure the top of the file so the H1 names the document and the work loop is demoted to an H2:
+
+- Change line 1 from `# Agent work loop` to `# AGENTS.md`.
+- Insert a blank line, then `## Agent work loop`, then the existing numbered list verbatim.
+
+If `AGENTS.md` already starts with `# AGENTS.md`, skip this step.
+
+## Step 2 — Discover values
+
+Read before writing. Prefer these sources, in order:
+
+1. **Package manifests** — `package.json`, `pyproject.toml`, `Cargo.toml`, `go.mod`, `pnpm-workspace.yaml`, `pixi.toml` …
+2. **Lockfiles** — confirm which package manager is actually in use (`pnpm-lock.yaml`, `yarn.lock`, `package-lock.json`, `poetry.lock`, `uv.lock`, `bun.lockb`).
+3. **CI configuration** — `.github/workflows/*`, `.gitlab-ci.yml`, `azure-pipelines.yml`, `Jenkinsfile`. **CI is the source of truth for build/test/lint commands**; copy exact strings, including flags. When CI and `README.md` disagree, CI wins.
+4. **Task runners** — `Makefile`, `justfile`, `Taskfile.yml`, `scripts/`, root `*.sh` / `*.ps1`. Promote canonical wrappers when they exist.
+5. **`README.md`** — sanity-check human-facing command docs against CI.
+6. **Source code** — *only* for the **Non-obvious patterns** slot, and only after the other slots are filled. Skim one or two representative feature folders, the HTTP/API client (if any), the test helpers, and one or two recent PR descriptions.
+
+Stay scoped: use targeted `Read` on specific paths over wide `Grep` sweeps. If you find yourself opening more than a handful of files, **stop and ask the user** instead of guessing.
+
+## Step 3 — Insert this populated block
+
+Insert the following section as the **first `##` block** in `AGENTS.md`, immediately after the H1. Replace every `<...>` with a discovered value before writing.
+
+````markdown
+## Project context
+
+> Loads on every agent invocation. Keep short.
+
+- **Stack / versions** — `<framework + language + runtime version; pin what is non-negotiable, e.g. "Next.js 15 App Router, TypeScript, Node 22.x">`.
+- **Package manager** — `<e.g. pnpm — never npm>`.
+- **Commands** — exact strings, including flags:
+  - Install: `<...>`
+  - Dev: `<...>`
+  - Build: `<...>`
+  - Typecheck: `<...>`
+  - Lint: `<...>`
+  - Test (all): `<...>`
+  - Test (single file): `<...>`
+- **Non-obvious patterns** — 1–5 counterintuitive decisions an outsider would miss (e.g. *"`apiClient` never throws — it returns `ApiResult<T>`, so `try/catch` around it is always wrong"*). Highest-signal block; keep it short and concrete.
+````
+
+Rules per slot:
+
+- **Stack / versions** — Single line. Use versions actually pinned (in `engines`, `requires-python`, `rust-version`, `go.mod`, a Dockerfile `FROM`, or a CI matrix). Write `<unpinned>` rather than guess.
+- **Package manager** — Whichever lockfile is present and CI uses. State it as a **do**, not only a **don't**.
+- **Commands** — Copy exact strings (including flags) from CI or the `scripts` block of the manifest. Do not invent commands. Write `<not configured>` if a command genuinely does not exist in the repo.
+- **Non-obvious patterns** — 1–5 entries, each one sentence. Each entry **MUST** be:
+  - **Counterintuitive** — an outsider would assume the opposite.
+  - **Evidence-backed** — you can point to the file or pattern that demonstrates it.
+  - **Paired do/don't** — state what to do, not only what to avoid.
+
+  Three real patterns beat seven speculative ones. If you cannot find any counterintuitive pattern, write fewer; an empty list is acceptable. **Speculative rules measurably hurt agent performance.**
+
+## Step 4 — Monorepo handling (if applicable)
+
+Run this step only when Step 2 surfaced **monorepo signals**:
+
+- A workspaces declaration: `pnpm-workspace.yaml`, `package.json` with `"workspaces"`, `lerna.json`, `nx.json`, `turbo.json`, `rush.json`, a `[workspace]` block in root `Cargo.toml`, or a uv/poetry workspace in root `pyproject.toml`.
+- Multiple `package.json` / `pyproject.toml` / `Cargo.toml` / `go.mod` files outside `node_modules/` and similar vendored paths.
+- A top-level layout like `apps/* + packages/*`, `services/*`, `libs/*`, or mixed-stack (e.g., `backend/` Python + `frontend/` TypeScript).
+
+### Decide which modules need their own AGENTS.md
+
+A module needs a per-module `AGENTS.md` **only when at least one** of these differs meaningfully from the root:
+
+- Stack or runtime version (e.g., backend Python 3.12 vs. frontend Node 22.x).
+- Package manager (e.g., `uv` in backend, `pnpm` in frontend).
+- Build / dev / test / lint / typecheck commands.
+- A non-obvious pattern that applies *only* inside that module.
+
+If a module shares stack, commands, and patterns with the root, **do not** create a per-module file. Duplication is the failure mode here, not under-coverage — the Augment 2026 study found that AGENTS.md files sitting on top of duplicated surrounding documentation underperformed having no per-module file at all.
+
+### Propose before writing
+
+Surface a short plan in chat covering:
+
+- The detected monorepo signal(s).
+- A list of candidate modules with their paths.
+- For each candidate, which slots actually differ from the root.
+- Your recommendation per module: **create sub-`AGENTS.md`** / **skip — same as root**.
+
+Wait for the user to confirm before writing any sub-files.
+
+### Per-module AGENTS.md shape
+
+Each per-module `AGENTS.md` **MUST** be small (target ≤ 30 lines). Contain only:
+
+1. A one-line note that this file overrides or extends the root, e.g. *"Overrides apply within this module; everything else inherits from `../AGENTS.md`."*
+2. A `## Project context` block containing **only the slots that differ** from the root. Omit identical slots — do not restate them.
+3. Optional: 1–3 module-specific non-obvious patterns under the same evidence rules as Step 3.
+
+Do not duplicate the root's work loop, scope discipline, guardrails, or reference pointers — those inherit. Per the Codex spec, the deeper file wins on conflict, so explicit overrides at the module level are sufficient.
+
+### Example layout
+
+```text
+repo/
+├── AGENTS.md                  # root: shared standards + root commands
+├── apps/
+│   ├── web/
+│   │   └── AGENTS.md          # overrides: Node 22.x, pnpm, vitest
+│   └── api/
+│       └── AGENTS.md          # overrides: Python 3.12, uv, pytest
+└── packages/
+    └── shared/                # no AGENTS.md — same stack/commands as root
+```
+
+### Monorepo-specific constraints
+
+- Do not generate a sub-file speculatively. The trigger is **divergence from the root**, confirmed by the user.
+- A monorepo with N modules does **not** mean N sub-files. Aim for fewer than N — ideally only the modules that truly diverge.
+- Sub-files contain **overrides only** — never restate root content.
+- The same evidence-over-inference rule from Step 2 applies per module: read that module's manifest, lockfile, and CI job(s) before writing anything.
+
+## Constraints
+
+- Edit `AGENTS.md` **only** for the H1 normalization in Step 1 and the inserted `## Project context` block in Step 3. Every other byte of the root `AGENTS.md` stays identical. (Per-module sub-files created in Step 4 are new files, not edits to the root.)
+- Do not add an architecture overview anywhere.
+- Do not grow the populated block beyond ~20 lines.
+- If you discover something worth documenting that does not fit one of the four slots (a gotcha, a test pattern, a directory convention), **surface it in chat for the user to decide**, do not write it into `AGENTS.md` yourself.
+- Do not commit on the user's behalf — leave the diff staged or unstaged for review.
+
+## Done when
+
+- Root `AGENTS.md` has `# AGENTS.md` as its H1 and `## Project context` as its first H2 section.
+- Every `<...>` in the root block is replaced with a discovered value, `<unpinned>`, or `<not configured>`.
+- The root populated block is **≤ ~20 lines**. If it grew, the extra content belongs in a reference file.
+- If monorepo signals were present (Step 4): the sub-file plan was reviewed by the user, each created sub-`AGENTS.md` is ≤ ~30 lines and contains overrides only, and modules skipped on purpose were named in the chat summary with the reason (*"same stack and commands as root"*).
+- You have posted a short summary in chat covering: which sources you read, where each value came from, which modules got sub-files (and which were skipped), and any slot you left empty and why.
+- No other section of any existing `AGENTS.md` has changed.
+
+##  Re-running
+
+`INIT.md` is one-shot per scope: once for the root, once for each module that gets a sub-file. After the first run, update each `## Project context` block directly when its commands, stack, or patterns change. Re-run only after a substantial restructure (new stack, monorepo split, module added or removed) and only with explicit user request.
+
