@@ -223,6 +223,8 @@ Good names: `waitForLoaded()`, `enterFeedback(text)`, `selectArea(name)`, `click
 
 Mock **boundaries**, not the UI. OK: network/services, storage, AI calls, platform integrations. Avoid mocking components under test, navigation, or interactions you can drive for real.
 
+Be very picky about what needs to be mocked. If not sure, do not mock. Always prefer full integration tests where we test full features. Never mock databases and internal services.
+
 > Mock what crosses the app boundary, not what defines the user experience.
 
 ### Assertions to prefer
