@@ -1,4 +1,4 @@
-# ai-coding-starter
+# ai-starter
 
 A small starter kit for **bootstrapping AI coding agents with good development guidelines**.
 
@@ -10,7 +10,7 @@ Run this from the root of the project you want to configure. Existing files are 
 
 ```bash
 tmp=$(mktemp -d)
-git clone --depth=1 git@bitbucket.org:tdisolutions/ai-coding-starter.git "$tmp"
+git clone --depth=1 git@github.com:aai-labs/ai-starter.git "$tmp"
 cp -n "$tmp"/{AGENTS,INIT,CODE_GUIDELINES,WEBAPP_GUIDELINES,TESTING,CHANGELOG}.md .
 rm -rf "$tmp"
 ```
@@ -18,16 +18,16 @@ rm -rf "$tmp"
 This works on Linux, macOS, WSL, and Git Bash on Windows. For native PowerShell, clone once and run the installer script:
 
 ```powershell
-git clone --depth=1 git@bitbucket.org:tdisolutions/ai-coding-starter.git
-cd ai-coding-starter
+git clone --depth=1 git@github.com:aai-labs/ai-starter.git
+cd ai-starter
 .\scripts\install.ps1 C:\path\to\your\project
 ```
 
 From bash after cloning:
 
 ```bash
-git clone --depth=1 git@bitbucket.org:tdisolutions/ai-coding-starter.git
-cd ai-coding-starter
+git clone --depth=1 git@github.com:aai-labs/ai-starter.git
+cd ai-starter
 bash scripts/install.sh /path/to/your/project
 ```
 
@@ -54,7 +54,7 @@ Use it **alongside** this starter, not instead of it:
 
 | Layer | What it gives you |
 |-------|-------------------|
-| **ai-coding-starter** (`AGENTS.md`, guidelines) | Project-specific rules: stack, commands, architecture, testing layout, review habits |
+| **ai-starter** (`AGENTS.md`, guidelines) | Project-specific rules: stack, commands, architecture, testing layout, review habits |
 | **Superpowers** (skills plugin) | Cross-project process: design refinement, bite-sized plans, red/green TDD, worktrees, subagent-driven execution |
 
 After you import the guideline files and run `INIT.md`, install Superpowers in **Claude Code** or **Codex** so the agent gets both **how this repo works** and **how to run a feature from idea to merge**.
