@@ -13,6 +13,8 @@ Whenever working, consult:
 - `WEBAPP_GUIDELINES.md` — front-end patterns (routing, client/server state, imports, Next.js defaults)
 - `TESTING.md` — **Python (GivenPy) + Node/TypeScript (direct HTTP integration) + browser E2E (page objects)**
 
+Before naming or discussing project-specific concepts, consult `CONTEXT.md` when present. Before changing a feature, system boundary, or operational contract, use `docs/INDEX.md` to find the relevant context when present. Read only the pages routed to the task; inspect code and tests for exact behavior.
+
 Those files use **MUST** / **SHOULD** / **MAY** where strictness matters (see `CODE_GUIDELINES.md`).
 
 ## What goes where
@@ -38,6 +40,12 @@ Simple, linear flows; composition over inheritance; immutable over mutable where
 ## Learning
 
 Record durable lessons in the appropriate guideline file or `docs/` — keep this file small.
+
+When a term, invariant, boundary, operational contract, or consequential decision changes, update its authoritative document in the same change. Update `docs/INDEX.md` when a routed page is added, moved, or removed. For an active multi-PR epic, update its feature change log when a PR advances the transition. Do not infer historical decision rationale from code alone.
+
+## Review context
+
+Before reviewing a change, map it through `docs/INDEX.md` when present. Check relevant glossary terms, feature and architecture invariants, guidelines, and linked decisions against the diff and tests. Cite the document path and specific rule for documentation-based findings. Treat an intentional contract change as valid when code, tests, and authoritative documentation change together.
 
 ## Collaboration stance
 

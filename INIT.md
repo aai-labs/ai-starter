@@ -6,15 +6,15 @@
 
 ## Goal
 
-Add a populated `## Project context` block to `AGENTS.md` using the template in **Step 3** below, with every `<...>` replaced by a value discovered from the repository.
+Add a populated `## Project context` block to `AGENTS.md` using the template in **Step 3** below, with every `<...>` replaced by a value discovered from the repository. Then establish the smallest evidence-backed project documentation router described in **Step 5**. Read `docs/DOCUMENTATION_BLUEPRINT.md` before creating project-specific pages.
 
 ## Why this is bounded
 
-Independent studies show that LLM-generated context files reduce task success by roughly 3% at +20% inference cost when committed without human review (Gloaguen et al., *Evaluating AGENTS.md*, arXiv:2602.11988; Augment 2026 study). The slots below are the narrow subset where agent-assisted discovery is positive ROI: **non-inferable commands, pinned versions, and counterintuitive patterns**. Stay inside that scope.
+Independent studies show that LLM-generated context files reduce task success by roughly 3% at +20% inference cost when committed without human review (Gloaguen et al., *Evaluating AGENTS.md*, arXiv:2602.11988; Augment 2026 study). The slots below are the narrow subset suitable for the always-loaded `AGENTS.md`: **non-inferable commands, pinned versions, and counterintuitive patterns**. Keep broader context in task-routed pages only when evidence supports it.
 
 ## Pre-flight
 
-- If `AGENTS.md` already contains a `## Project context` section, **stop** and ask the user whether to refresh it in place or abort.
+- If `AGENTS.md` already contains a `## Project context` section, **stop** and ask the user whether to refresh the existing bootstrap in place or abort. Do not duplicate an existing context block or documentation page.
 - If `AGENTS.md` does not exist at the repo root, **stop** and ask the user where the agent guideline file lives.
 
 ## Step 1 — Normalize AGENTS.md structure
@@ -37,7 +37,7 @@ Read before writing. Prefer these sources, in order:
 5. **`README.md`** — sanity-check human-facing command docs against CI.
 6. **Source code** — *only* for the **Non-obvious patterns** slot, and only after the other slots are filled. Skim one or two representative feature folders, the HTTP/API client (if any), the test helpers, and one or two recent PR descriptions.
 
-Stay scoped: use targeted `Read` on specific paths over wide `Grep` sweeps. If you find yourself opening more than a handful of files, **stop and ask the user** instead of guessing.
+Stay scoped: use targeted reads on likely paths over wide searches. Inspect additional files only when a candidate documentation claim needs evidence. If evidence remains unavailable, omit the claim or report the ambiguity instead of guessing.
 
 ## Step 3 — Insert this populated block
 
@@ -134,12 +134,24 @@ repo/
 - Sub-files contain **overrides only** — never restate root content.
 - The same evidence-over-inference rule from Step 2 applies per module: read that module's manifest, lockfile, and CI job(s) before writing anything.
 
+## Step 5 — Establish task-routed documentation
+
+Read `docs/DOCUMENTATION_BLUEPRINT.md` and inspect existing `docs/`, source, schemas, tests, and relevant history or issues. Treat the imported `docs/INDEX.md` as a starter route, not as proof that project-specific pages exist. Inventory existing authoritative pages before adding anything.
+
+- Keep `docs/INDEX.md` as a task-to-document table. Add a row for each maintained feature, architecture, decision, or active epic page with a specific **when working on** trigger and a source path to inspect. Remove placeholder guidance once real routes exist; never link a nonexistent page.
+- Create or update `CONTEXT.md` only when project-specific terms, misleading synonyms, or resolved ambiguities are supported by code, tests, existing docs, or maintainer evidence. Keep it a glossary, not an architecture overview. If no terms are evidenced, leave `CONTEXT.md` absent and do not add a glossary row to the index.
+- Create feature or architecture pages only for cross-file invariants, boundaries, state transitions, or change impact that an agent could misunderstand. Link authoritative source and test paths. Do not narrate every endpoint or field.
+- Create an ADR only when a hard-to-reverse, surprising choice and its real trade-off are supported by a prior decision, issue, commit, plan, or maintainer statement. Do not reconstruct rationale from code shape. Report missing rationale and defer the ADR.
+- Create a feature epic change log only for an active multi-ticket or multi-PR transition with evidenced coordination needs. Do not create empty directories or template pages for unused categories.
+
+Use the nearest existing document instead of duplicating a fact. Preserve project-owned pages and conventions. If a new route should be mandatory for nearly every task, add a concise trigger-and-target pointer to `AGENTS.md`; otherwise keep it in the index. After writing, verify that all links resolve and every substantive current-behavior claim has code, test, or schema support.
+
 ## Constraints
 
-- Edit `AGENTS.md` **only** for the H1 normalization in Step 1 and the inserted `## Project context` block in Step 3. Every other byte of the root `AGENTS.md` stays identical. (Per-module sub-files created in Step 4 are new files, not edits to the root.)
-- Do not add an architecture overview anywhere.
+- Edit `AGENTS.md` only for the H1 normalization, the `## Project context` block, and a concise project-specific route if Step 5 identifies one that applies to nearly every task. Preserve all other root guidance. (Per-module sub-files created in Step 4 are new files.)
+- Do not add an architecture overview to `AGENTS.md`; create a focused architecture page only when Step 5 finds an evidenced need.
 - Do not grow the populated block beyond ~20 lines.
-- If you discover something worth documenting that does not fit one of the four slots (a gotcha, a test pattern, a directory convention), **surface it in chat for the user to decide**, do not write it into `AGENTS.md` yourself.
+- Put evidenced knowledge outside the four context slots in its authoritative task-routed location; surface unresolved ambiguities in the summary rather than guessing.
 - Do not commit on the user's behalf — leave the diff staged or unstaged for review.
 
 ## Done when
@@ -149,9 +161,10 @@ repo/
 - The root populated block is **≤ ~20 lines**. If it grew, the extra content belongs in a reference file.
 - If monorepo signals were present (Step 4): the sub-file plan was reviewed by the user, each created sub-`AGENTS.md` is ≤ ~30 lines and contains overrides only, and modules skipped on purpose were named in the chat summary with the reason (*"same stack and commands as root"*).
 - You have posted a short summary in chat covering: which sources you read, where each value came from, which modules got sub-files (and which were skipped), and any slot you left empty and why.
-- No other section of any existing `AGENTS.md` has changed.
+- No other section of any existing `AGENTS.md` has changed except a justified project-specific route from Step 5.
+- `docs/INDEX.md` contains only routes to existing files, and any added project-specific pages contain evidence-backed claims.
 
-##  Re-running
+## Re-running
 
-`INIT.md` is one-shot per scope: once for the root, once for each module that gets a sub-file. After the first run, update each `## Project context` block directly when its commands, stack, or patterns change. Re-run only after a substantial restructure (new stack, monorepo split, module added or removed) and only with explicit user request.
+`INIT.md` is one-shot per scope: once for the root, once for each module that gets a sub-file. After the first run, update context blocks and task-routed documentation directly when their contracts change. Re-run only after a substantial restructure (new stack, monorepo split, module added or removed) and only with explicit user request.
 
