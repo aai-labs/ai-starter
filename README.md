@@ -12,6 +12,8 @@ Run this from the root of the project you want to configure. Existing files are 
 tmp=$(mktemp -d)
 git clone --depth=1 git@bitbucket.org:tdisolutions/ai-coding-starter.git "$tmp"
 cp -n "$tmp"/{AGENTS,INIT,CODE_GUIDELINES,WEBAPP_GUIDELINES,TESTING,CHANGELOG}.md .
+mkdir -p docs
+cp -n "$tmp"/docs/{INDEX,DOCUMENTATION_BLUEPRINT}.md docs/
 rm -rf "$tmp"
 ```
 
@@ -39,12 +41,18 @@ bash scripts/install.sh /path/to/your/project
 - [`WEBAPP_GUIDELINES.md`](WEBAPP_GUIDELINES.md) — front-end structure, state, routing, imports, and API boundary rules.
 - [`TESTING.md`](TESTING.md) — the single home for Python, Node/TypeScript, and browser test conventions.
 - [`CHANGELOG.md`](CHANGELOG.md) — feature-level history agents should keep current.
+- [`docs/INDEX.md`](docs/INDEX.md) — task-to-document context map, populated with project routes during bootstrap.
+- [`docs/DOCUMENTATION_BLUEPRINT.md`](docs/DOCUMENTATION_BLUEPRINT.md) — rules for the project glossary, feature and architecture pages, ADRs, and active epic logs.
 
 ## After importing
 
 1. **Review the files** before committing. Delete anything that does not fit your stack, tighten anything that matters. Treat these guidelines as a baseline, not as permanent boilerplate.
-2. **Bootstrap project context.** Open an agent session at the repo root and say *"Follow `INIT.md`."* The agent will discover your stack, commands, and non-obvious patterns from manifests and CI, then insert a populated `## Project context` block into `AGENTS.md`. For monorepos, it will propose per-module sub-`AGENTS.md` files only where modules actually diverge from the root. Review the resulting diff before committing.
+2. **Bootstrap project context.** Open an agent session at the repo root and say *"Follow `INIT.md`."* The agent will discover your stack, commands, and non-obvious patterns from manifests and CI, insert a populated `## Project context` block into `AGENTS.md`, and establish evidence-backed routes in `docs/INDEX.md`. It creates a glossary or focused pages only when the repository supports them. For monorepos, it will propose per-module sub-`AGENTS.md` files only where modules actually diverge from the root. Review the resulting diff before committing.
 3. **Start working.** From this point on, agent sessions read `AGENTS.md` (and any per-module sub-files) automatically; you don't need to re-run `INIT.md` unless the stack or commands change substantially.
+
+## Optional: docs-writer skill
+
+The supplied [`docs-writer` skill](.agents/skills/docs-writer/SKILL.md) provides a repeatable workflow for maintaining agent-facing documentation. To use it, copy `.agents/skills/docs-writer/` to your project’s `.agents/skills/` directory or your agent’s global skills directory. The installers leave this optional skill out. The core documentation rules work without it.
 
 ## Optional: [Superpowers](https://github.com/obra/superpowers)
 

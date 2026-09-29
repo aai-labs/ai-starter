@@ -4,6 +4,8 @@
 
 ### Added
 
+- Agent documentation blueprint: task-routed `docs/INDEX.md`, authoritative-location guidance, evidence-backed `INIT.md` bootstrap, review routing in `AGENTS.md`, and an optional `docs-writer` skill. Import scripts and README now include the required blueprint files.
+
 - **`README.md`** — optional [Superpowers](https://github.com/obra/superpowers) section: how it complements this starter, Claude Code and Codex install steps, basic skill-driven workflow, and pointer to upstream install docs for other agents.
 - **`INIT.md`** — one-shot bootstrap prompt the user runs once per repo (*"Follow `INIT.md`."*) so the agent discovers and inserts a populated `## Project context` block (stack/versions, package manager, commands, non-obvious patterns) into `AGENTS.md`. Scoped to evidence-backed values from manifests, lockfiles, CI, and task runners; explicitly forbids speculation, architecture overviews, and edits outside the new block. Includes a **Step 4 — Monorepo handling** that detects workspace declarations (`pnpm-workspace.yaml`, `nx.json`, Cargo `[workspace]`, uv/poetry workspaces, …) and proposes per-module sub-`AGENTS.md` files only for modules whose stack/commands/patterns diverge from the root, with each sub-file scoped to overrides only (target ≤ 30 lines) per the Codex deeper-file-wins precedence rule. References the studies that motivate the scope: Gloaguen et al. (arXiv:2602.11988) and the Augment 2026 AGENTS.md study (the latter found module-level files outperform monolithic root files for mid-size modules).
 

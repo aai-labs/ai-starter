@@ -4,7 +4,7 @@ set -euo pipefail
 target_path="${1:-.}"
 source_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 target_root="$(cd "$target_path" && pwd)"
-files=(AGENTS.md INIT.md CODE_GUIDELINES.md WEBAPP_GUIDELINES.md TESTING.md CHANGELOG.md)
+files=(AGENTS.md INIT.md CODE_GUIDELINES.md WEBAPP_GUIDELINES.md TESTING.md CHANGELOG.md docs/INDEX.md docs/DOCUMENTATION_BLUEPRINT.md)
 
 for file in "${files[@]}"; do
   source="$source_root/$file"
@@ -15,6 +15,7 @@ for file in "${files[@]}"; do
     continue
   fi
 
+  mkdir -p "$(dirname "$target")"
   cp "$source" "$target"
   echo "added $file"
 done
